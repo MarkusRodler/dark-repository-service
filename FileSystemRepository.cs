@@ -14,8 +14,9 @@ namespace Dark
 
         public IImmutableList<string> getIdsForAggregate(string aggregate)
         {
-            var files = Directory.EnumerateFiles(folder + aggregate, "*" + suffix);
-            return files.Select(x => x.Remove(x.Length - suffix.Length).Remove(0, folder.Length)).ToImmutableList();
+            var path = $"{folder}{aggregate}/";
+            var files = Directory.EnumerateFiles(path, "*" + suffix);
+            return files.Select(x => x.Remove(x.Length - suffix.Length).Remove(0, path.Length)).ToImmutableList();
         }
 
         public bool has(string aggregate, string id) => File.Exists(getFilePath(aggregate, id));
@@ -23,12 +24,9 @@ namespace Dark
         public IImmutableList<string> read(string aggregate, string id)
             => File.ReadLines(getFilePath(aggregate, id)).ToImmutableList();
 
-        public IImmutableList<string> readOrEmpty(string aggregate, string id)
-            => has(aggregate, id) ? read(aggregate, id) : ImmutableList.Create<string>();
-
         public async Task append(string aggregate, string id, IImmutableList<string> entries, int expectedVersion)
         {
-            if (currentVersion(aggregate, id) != expectedVersion) {
+            if (expectedVersion > -1 && currentVersion(aggregate, id) != expectedVersion) {
                 throw new ConcurrencyException();
             }
             Directory.CreateDirectory(folder + aggregate);
@@ -37,7 +35,7 @@ namespace Dark
 
         public async Task overwrite(string aggregate, string id, IImmutableList<string> entries, int expectedVersion)
         {
-            if (currentVersion(aggregate, id) != expectedVersion) {
+            if (expectedVersion > -1 && currentVersion(aggregate, id) != expectedVersion) {
                 throw new ConcurrencyException();
             }
             Directory.CreateDirectory(folder + aggregate);
