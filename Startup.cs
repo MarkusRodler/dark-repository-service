@@ -50,23 +50,29 @@ namespace Dark
                 endpoints.MapGet("getIdsFor/{aggregate}", getIdsFor);
                 endpoints.MapGet("has/{aggregate}/{id}", has);
                 endpoints.MapGet("read/{aggregate}/{id}", read);
-                endpoints.MapPost("append/{aggregate}/{id}/{expectedVersion:int}", append);
+                endpoints.MapPut("append/{aggregate}/{id}/{expectedVersion:int}", append);
                 endpoints.MapPost("overwrite/{aggregate}/{id}/{expectedVersion:int}", overwrite);
             });
         }
 
         public static async Task getIdsFor(HttpContext context)
         {
-            var aggregate = context.GetRouteValue("aggregate") as string;
+            var aggregate = context.GetRouteValue("aggregate") + "";
 
             var repository = context.RequestServices.GetRequiredService<FileSystemRepository>();
-            await context.Response.WriteAsJsonAsync(repository.getIdsForAggregate(aggregate));
+            try {
+                await context.Response.WriteAsJsonAsync(repository.getIdsForAggregate(aggregate));
+            }
+            catch (Exception exception) {
+                context.Response.StatusCode = 404;
+                await context.Response.WriteAsync(exception.Message);
+            }
         }
 
         public static Task has(HttpContext context)
         {
-            var aggregate = context.GetRouteValue("aggregate") as string;
-            var id = context.GetRouteValue("id") as string;
+            var aggregate = context.GetRouteValue("aggregate") + "";
+            var id = context.GetRouteValue("id") + "";
 
             var repository = context.RequestServices.GetRequiredService<FileSystemRepository>();
             var hasEventLog = repository.has(aggregate, id);
@@ -78,8 +84,8 @@ namespace Dark
 
         public static async Task read(HttpContext context)
         {
-            var aggregate = context.GetRouteValue("aggregate") as string;
-            var id = context.GetRouteValue("id") as string;
+            var aggregate = context.GetRouteValue("aggregate") + "";
+            var id = context.GetRouteValue("id") + "";
 
             context.Response.ContentType = "application/jsonl; charset=utf-8";
             var repository = context.RequestServices.GetRequiredService<FileSystemRepository>();
@@ -95,8 +101,8 @@ namespace Dark
 
         public static async Task append(HttpContext context)
         {
-            var aggregate = context.GetRouteValue("aggregate") as string;
-            var id = context.GetRouteValue("id") as string;
+            var aggregate = context.GetRouteValue("aggregate") + "";
+            var id = context.GetRouteValue("id") + "";
             var expectedVersion = Convert.ToInt32(context.GetRouteValue("expectedVersion") ?? 0);
             var eventLog = ImmutableList.Create<string>();
             using (var reader = new StreamReader(context.Request.Body)) {
@@ -117,8 +123,8 @@ namespace Dark
 
         public static async Task overwrite(HttpContext context)
         {
-            var aggregate = context.GetRouteValue("aggregate") as string;
-            var id = context.GetRouteValue("id") as string;
+            var aggregate = context.GetRouteValue("aggregate") + "";
+            var id = context.GetRouteValue("id") + "";
             var expectedVersion = Convert.ToInt32(context.GetRouteValue("expectedVersion") ?? 0);
             var eventLog = ImmutableList.Create<string>();
             using (var reader = new StreamReader(context.Request.Body)) {
