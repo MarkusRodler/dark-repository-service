@@ -11,16 +11,16 @@ namespace Dark
         [Route("/error")]
         public IActionResult ErrorLocalDevelopment([FromServices] IWebHostEnvironment webHostEnvironment)
         {
-            if (webHostEnvironment.EnvironmentName != "Development") {
+            if (webHostEnvironment.EnvironmentName != "Development")
+            {
                 throw new InvalidOperationException("This shouldn't be invoked in non-development environments.");
             }
 
-            var exceptionHandlerPathFeature = HttpContext.Features.Get<IExceptionHandlerPathFeature>();
-
             var context = HttpContext.Features.Get<IExceptionHandlerFeature>();
 
-            System.Console.WriteLine(context.Error);
-            if (context.Error is InvalidOperationException) {
+            Console.WriteLine(context.Error);
+            if (context.Error is InvalidOperationException)
+            {
                 return UnprocessableEntity(context.Error.Message);
                 // Problem(
                 //     detail: context.Error.StackTrace,

@@ -1,0 +1,15 @@
+{
+    "editor.detectIndentation": false,
+    "editor.formatOnSave": true,
+    "editor.rulers": [
+        120
+    ],
+    "files.eol": "\n",
+    "files.trimTrailingWhitespace": true,
+    "files.trimFinalNewlines": true,
+    "files.insertFinalNewline": true,
+    "git.rebaseWhenSync": true,
+    "omnisharp.enableEditorConfigSupport": true,
+    "omnisharp.enableImportCompletion": true,
+    "omnisharp.enableRoslynAnalyzers": true
+}

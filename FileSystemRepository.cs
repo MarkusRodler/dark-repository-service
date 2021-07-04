@@ -7,43 +7,45 @@ namespace Dark
 {
     public class FileSystemRepository
     {
-        private const string suffix = ".jsonl";
-        private readonly string folder;
+        const string Suffix = ".jsonl";
+        readonly string folder;
 
         public FileSystemRepository(string folder) => this.folder = folder;
 
-        public IImmutableList<string> getIdsForAggregate(string aggregate)
+        public IImmutableList<string> GetIdsForAggregate(string aggregate)
         {
             var path = $"{folder}{aggregate}/";
-            var files = Directory.EnumerateFiles(path, "*" + suffix);
-            return files.Select(x => x.Remove(x.Length - suffix.Length).Remove(0, path.Length)).ToImmutableList();
+            var files = Directory.EnumerateFiles(path, "*" + Suffix);
+            return files.Select(x => x.Remove(x.Length - Suffix.Length).Remove(0, path.Length)).ToImmutableList();
         }
 
-        public bool has(string aggregate, string id) => File.Exists(getFilePath(aggregate, id));
+        public bool Has(string aggregate, string id) => File.Exists(GetFilePath(aggregate, id));
 
-        public IImmutableList<string> read(string aggregate, string id)
-            => File.ReadLines(getFilePath(aggregate, id)).ToImmutableList();
+        public IImmutableList<string> Read(string aggregate, string id)
+            => File.ReadLines(GetFilePath(aggregate, id)).ToImmutableList();
 
-        public async Task append(string aggregate, string id, IImmutableList<string> entries, int expectedVersion)
+        public async Task Append(string aggregate, string id, IImmutableList<string> entries, int expectedVersion)
         {
-            if (expectedVersion > -1 && currentVersion(aggregate, id) != expectedVersion) {
+            if (expectedVersion > -1 && CurrentVersion(aggregate, id) != expectedVersion)
+            {
                 throw new ConcurrencyException();
             }
             Directory.CreateDirectory(folder + aggregate);
-            await File.AppendAllLinesAsync(getFilePath(aggregate, id), entries);
+            await File.AppendAllLinesAsync(GetFilePath(aggregate, id), entries);
         }
 
-        public async Task overwrite(string aggregate, string id, IImmutableList<string> entries, int expectedVersion)
+        public async Task Overwrite(string aggregate, string id, IImmutableList<string> entries, int expectedVersion)
         {
-            if (expectedVersion > -1 && currentVersion(aggregate, id) != expectedVersion) {
+            if (expectedVersion > -1 && CurrentVersion(aggregate, id) != expectedVersion)
+            {
                 throw new ConcurrencyException();
             }
             Directory.CreateDirectory(folder + aggregate);
-            await File.WriteAllLinesAsync(getFilePath(aggregate, id), entries);
+            await File.WriteAllLinesAsync(GetFilePath(aggregate, id), entries);
         }
 
-        private int currentVersion(string aggregate, string id)
-            => has(aggregate, id) ? File.ReadLines(getFilePath(aggregate, id)).Count() : 0;
-        private string getFilePath(string aggregate, string id) => $"{folder}{aggregate}/{id}{suffix}";
+        int CurrentVersion(string aggregate, string id)
+            => Has(aggregate, id) ? File.ReadLines(GetFilePath(aggregate, id)).Count() : 0;
+        string GetFilePath(string aggregate, string id) => $"{folder}{aggregate}/{id}{Suffix}";
     }
 }
