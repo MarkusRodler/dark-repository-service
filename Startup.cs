@@ -25,7 +25,7 @@ namespace Dark
             services.AddHealthChecks();
             services.AddResponseCompression();
 
-            services.AddSingleton<FileSystemRepository>(new FileSystemRepository("Data/"));
+            services.AddSingleton(new FileSystemRepository("Data/"));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
