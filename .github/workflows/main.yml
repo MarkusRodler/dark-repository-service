@@ -43,8 +43,9 @@ jobs:
 
           echo IMAGE_ID=$IMAGE_ID
           echo TAG=$TAG
+          docker pull $IMAGE_ID:latest
 
-          docker build . --file Dockerfile --tag $IMAGE_ID:$TAG --tag $IMAGE_ID:latest
+          docker build . --file Dockerfile --tag $IMAGE_ID:$TAG --tag $IMAGE_ID:latest --cache-from $IMAGE_ID:latest
 
       - name: Push image
         if: github.event_name == 'push'
