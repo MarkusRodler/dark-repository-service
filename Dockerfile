@@ -10,7 +10,7 @@ RUN dotnet publish "Dark.csproj" -c Release -p:PublishReadyToRun=true -o /app/pu
     /p:PublishTrimmed=true \
     /p:PublishSingleFile=true
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:5.0-alpine AS final
+FROM mcr.microsoft.com/dotnet/runtime-deps:6.0-alpine AS final
 WORKDIR /app
 ENV TZ=Europe/Berlin
 RUN adduser --disabled-password --home /app --gecos '' dotnetuser \
