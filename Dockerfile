@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:5.0-alpine AS publish
+FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS publish
 WORKDIR /app
 COPY ["Dark.csproj", "./"]
 RUN dotnet restore "Dark.csproj" --runtime alpine-x64
