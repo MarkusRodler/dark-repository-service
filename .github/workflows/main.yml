@@ -1,4 +1,4 @@
-name: Docker
+name: Service
 
 on:
   push:
@@ -7,7 +7,8 @@ on:
   pull_request:
 
 env:
-  IMAGE_NAME: dark-repository-service
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
 
 jobs:
   lint:
@@ -15,15 +16,15 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.0
 
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v1.9.0
         with:
-          dotnet-version: "5.0.x"
+          dotnet-version: "6.0.x"
 
       - name: Lint dotnet
-        run: dotnet tool restore && dotnet format --check --verbosity diagnostic
+        run: dotnet tool restore && dotnet format --verify-no-changes --verbosity diagnostic
 
   build:
     runs-on: ubuntu-latest
@@ -31,10 +32,14 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2.3.4
+        uses: actions/checkout@v2.4.0
 
       - name: Log into registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        uses: docker/login-action@v1.10.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build image
         run: |
@@ -62,16 +67,20 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v2.3.4
+      - uses: actions/checkout@v2.4.0
         with:
           repository: "MarkusRodler/dark-server"
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Bump version
         run: |
+          REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
           TAG=$(date +%Y%m%d).${{ github.run_number }}
+
+          echo REPOSITORY=$REPOSITORY
           echo TAG=$TAG
-          sed -i -E "s/$IMAGE_NAME:[0-9]+\.[0-9]+$/$IMAGE_NAME:$TAG/" Repository/RepositoryService.yaml
+
+          sed -i -E "s|$REPOSITORY:[0-9]+\.[0-9]+$|$REPOSITORY:$TAG|" Repository/RepositoryService.yaml
 
       - name: Push version
         run: |

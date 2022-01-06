@@ -1,6 +1,3 @@
-using System;
+namespace Dark;
 
-namespace Dark
-{
-    public class ConcurrencyException : Exception { }
-}
+public class ConcurrencyException : Exception { }

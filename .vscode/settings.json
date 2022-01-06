@@ -8,7 +8,12 @@
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
     "files.insertFinalNewline": true,
+    "files.exclude": {
+        "**/bin": true,
+        "**/obj": true
+    },
     "git.rebaseWhenSync": true,
+    "csharp.semanticHighlighting.enabled": true,
     "omnisharp.enableEditorConfigSupport": true,
     "omnisharp.enableImportCompletion": true,
     "omnisharp.enableRoslynAnalyzers": true

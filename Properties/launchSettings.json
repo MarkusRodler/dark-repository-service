@@ -3,7 +3,7 @@
     "profiles": {
         "Dark": {
             "commandName": "Project",
-            "dotnetRunMessages": "true",
+            "dotnetRunMessages": true,
             "launchBrowser": true,
             "launchUrl": "",
             "applicationUrl": "http://localhost:5032",
