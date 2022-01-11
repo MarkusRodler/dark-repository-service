@@ -6,6 +6,7 @@ builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 builder.Services.AddHealthChecks();
 builder.Services.AddResponseCompression();
+builder.Services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.AddContext<MessageSerializerContext>());
 
 builder.Services.AddSingleton(new FileSystemRepository("Data/"));
 
