@@ -11,7 +11,7 @@ RUN dotnet publish "Dark.csproj" \
     --runtime alpine-x64 \
     --self-contained true
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:6.0-alpine AS final
+FROM mcr.microsoft.com/dotnet/runtime-deps:7.0-alpine AS final
 WORKDIR /app
 RUN adduser --disabled-password --home /app --gecos "" dotnetuser
 USER dotnetuser
