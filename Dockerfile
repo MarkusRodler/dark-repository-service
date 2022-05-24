@@ -13,10 +13,9 @@ RUN dotnet publish "Dark.csproj" \
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:6.0-alpine AS final
 WORKDIR /app
-RUN adduser --disabled-password --home /app --gecos '' dotnetuser \
-    && chown -R dotnetuser /app
+RUN adduser --disabled-password --home /app --gecos "" dotnetuser
 USER dotnetuser
 EXPOSE 5000
-COPY --from=publish /app/publish .
+COPY --from=publish --chown=dotnetuser:dotnetuser /app/publish .
 ENV ASPNETCORE_URLS=http://+:5000
 ENTRYPOINT ["./Dark"]
