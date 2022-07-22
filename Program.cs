@@ -1,5 +1,7 @@
 using Dark;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
@@ -23,6 +25,16 @@ app.UseExceptionHandler(c => c.Run(async context =>
     };
     await context.Response.WriteAsJsonAsync(new { error = error?.Message });
 }));
+
+app.UseStaticFiles(
+new StaticFileOptions
+{
+    ContentTypeProvider = new FileExtensionContentTypeProvider(
+        new Dictionary<string, string>() { { ".jsonl", "application/jsonl; charset=utf-8" } }
+    ),
+    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "Data")),
+    RequestPath = "/Read"
+});
 
 app.UseRouting();
 
