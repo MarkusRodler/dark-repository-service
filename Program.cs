@@ -19,22 +19,23 @@ app.UseExceptionHandler(c => c.Run(async context =>
     var error = context.Features.Get<IExceptionHandlerPathFeature>()?.Error;
     context.Response.StatusCode = error switch
     {
-        IOException => 404,
-        ConcurrencyException => 422,
-        _ => 500
+        IOException => StatusCodes.Status404NotFound,
+        ConcurrencyException => StatusCodes.Status422UnprocessableEntity,
+        _ => StatusCodes.Status500InternalServerError
     };
     await context.Response.WriteAsJsonAsync(new { error = error?.Message });
 }));
 
 app.UseStaticFiles(
-new StaticFileOptions
-{
-    ContentTypeProvider = new FileExtensionContentTypeProvider(
-        new Dictionary<string, string>() { { ".jsonl", "application/jsonl; charset=utf-8" } }
-    ),
-    FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "Data")),
-    RequestPath = "/Read"
-});
+    new StaticFileOptions
+    {
+        ContentTypeProvider = new FileExtensionContentTypeProvider(
+            new Dictionary<string, string>() { { ".jsonl", "application/jsonl; charset=utf-8" } }
+        ),
+        FileProvider = new PhysicalFileProvider(Path.Combine(builder.Environment.ContentRootPath, "Data")),
+        RequestPath = "/Read"
+    }
+);
 
 app.UseRouting();
 
@@ -85,7 +86,7 @@ static async Task Overwrite(
 static async Task<IImmutableList<string>> ReadBodyAsListOfStrings(HttpRequest request)
 {
     var list = ImmutableList.Create<string>();
-    using (var reader = new StreamReader(request.Body))
+    using (StreamReader reader = new(request.Body))
     {
         var line = "";
         while ((line = await reader.ReadLineAsync()) is not null)

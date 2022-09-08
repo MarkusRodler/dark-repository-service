@@ -2,7 +2,7 @@ namespace Dark;
 
 public class FileSystemRepository
 {
-    const string Suffix = ".jsonl";
+    const string Suffix = ".eventlog.jsonl";
     readonly string folder;
 
     public FileSystemRepository(string folder) => this.folder = folder;
@@ -11,7 +11,7 @@ public class FileSystemRepository
     {
         var path = $"{folder}{aggregate}/";
         var files = Directory.EnumerateFiles(path, "*" + Suffix);
-        var list = files.Select(x => x.Remove(x.Length - Suffix.Length).Remove(0, path.Length)).ToImmutableList();
+        var list = files.Select(x => x[path.Length..^Suffix.Length]).ToImmutableList();
         return Task.FromResult<IImmutableList<string>>(list);
     }
 
