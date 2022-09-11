@@ -2,7 +2,7 @@ namespace Dark;
 
 public class FileSystemRepository
 {
-    const string Suffix = ".eventlog.jsonl";
+    const string Suffix = ".jsonl";
     readonly string folder;
 
     public FileSystemRepository(string folder) => this.folder = folder;
