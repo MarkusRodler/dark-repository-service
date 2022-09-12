@@ -10,7 +10,7 @@ public class FileSystemRepository
     public Task<IImmutableList<string>> GetIdsForAggregate(string aggregate)
     {
         var path = $"{folder}{aggregate}/";
-        var files = Directory.EnumerateFiles(path, "*" + Suffix);
+        var files = Directory.EnumerateFiles(path, '*' + Suffix);
         var list = files.Select(x => x[path.Length..^Suffix.Length]).ToImmutableList();
         return Task.FromResult<IImmutableList<string>>(list);
     }

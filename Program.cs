@@ -56,7 +56,7 @@ app.Run();
 static async Task Read(HttpResponse response, FileSystemRepository repository, string aggregate, string id)
 {
     response.ContentType = "application/jsonl; charset=utf-8";
-    await response.WriteAsync(string.Join("\n", await repository.Read(aggregate, id)));
+    await response.WriteAsync(string.Join('\n', await repository.Read(aggregate, id)));
 }
 
 static async Task Append(
