@@ -1,3 +1,3 @@
 namespace Dark;
 
-public class ConcurrencyException : Exception { }
+public sealed class ConcurrencyException : Exception { }

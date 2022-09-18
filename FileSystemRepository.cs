@@ -1,6 +1,6 @@
 namespace Dark;
 
-public class FileSystemRepository
+public sealed class FileSystemRepository
 {
     const string Suffix = ".jsonl";
     readonly string folder;
