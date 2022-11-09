@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/cbl-mariner/base/core:2.0 AS publish
 ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
-RUN tdnf -y install dotnet-sdk-6.0 ca-certificates-microsoft
+RUN tdnf -y install dotnet-sdk-7.0 ca-certificates-microsoft
 WORKDIR /app
 COPY ["Dark.csproj", "./"]
 RUN dotnet restore "Dark.csproj" --runtime linux-x64
@@ -14,7 +14,7 @@ RUN dotnet publish "Dark.csproj" \
 
 # Not working because of inaccessable folder
 # See: https://stackoverflow.com/questions/55394567/mount-volumes-as-non-root-user-in-docker-container
-# FROM mcr.microsoft.com/dotnet/runtime-deps:6.0-cbl-mariner2.0-distroless AS final
+# FROM mcr.microsoft.com/dotnet/runtime-deps:7.0-cbl-mariner2.0-distroless AS final
 # WORKDIR /app
 # EXPOSE 5000
 # COPY --from=publish --chown=app:app /app/publish .
@@ -22,7 +22,7 @@ RUN dotnet publish "Dark.csproj" \
 # ENTRYPOINT ["./Dark"]
 
 # Modified version from CBL-Mariner Repository
-# See: https://github.com/dotnet/dotnet-docker/blob/main/src/runtime-deps/6.0/cbl-mariner2.0-distroless/amd64/Dockerfile
+# See: https://github.com/dotnet/dotnet-docker/blob/main/src/runtime-deps/7.0/cbl-mariner2.0-distroless/amd64/Dockerfile
 FROM mcr.microsoft.com/cbl-mariner/base/core:2.0 AS installer
 RUN mkdir /staging \
     && tdnf install -y --releasever=2.0 --installroot /staging \

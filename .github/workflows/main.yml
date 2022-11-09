@@ -20,7 +20,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v3.0.3
         with:
-          dotnet-version: "6.0.x"
+          dotnet-version: "7.0.x"
 
       - name: Lint dotnet
         run: dotnet tool restore && dotnet format --verify-no-changes --verbosity diagnostic
