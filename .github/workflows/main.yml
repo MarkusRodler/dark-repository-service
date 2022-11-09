@@ -23,7 +23,8 @@ jobs:
           dotnet-version: "7.0.x"
 
       - name: Lint dotnet
-        run: dotnet tool restore && dotnet format --verify-no-changes --verbosity diagnostic
+        run: dotnet tool update -g dotnet-format && dotnet-format --check --verbosity diagnostic # Old but working
+        # run: dotnet format --verify-no-changes --verbosity diagnostic # New, not working
 
   build:
     runs-on: ubuntu-latest
