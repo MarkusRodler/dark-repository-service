@@ -45,10 +45,10 @@ app.UseResponseCompression();
 
 app.MapHealthChecks("/heartbeat");
 app.MapGet("favicon.ico", RespondWith.Status(StatusCodes.Status404NotFound));
-app.MapGet("GetIdsFor/{aggregate}", RespondWith.GetIdsForAggregate());
-app.MapGet("Has/{aggregate}/{id}", RespondWith.Has());
-app.MapGet("Read/{aggregate}/{id}", RespondWith.Read());
-app.MapPut("Append/{aggregate}/{id}/{expectedVersion:int}", RespondWith.Append());
-app.MapPost("Overwrite/{aggregate}/{id}/{expectedVersion:int}", RespondWith.Overwrite());
+app.MapGet("GetIdsFor/{aggregate}", RespondWith.GetIdsForAggregate);
+app.MapGet("Has/{aggregate}/{id}", RespondWith.Has);
+app.MapGet("Read/{aggregate}/{id}", RespondWith.Read);
+app.MapPut("Append/{aggregate}/{id}/{expectedVersion:int}", RespondWith.Append);
+app.MapPost("Overwrite/{aggregate}/{id}/{expectedVersion:int}", RespondWith.Overwrite);
 
 app.Run();
