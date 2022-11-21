@@ -8,8 +8,9 @@ builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 builder.Services.AddHealthChecks();
 builder.Services.AddResponseCompression();
-builder.Services.AddControllers().AddJsonOptions(x => x.JsonSerializerOptions.AddContext<MessageSerializerContext>());
 
+MessageSerializerContext jsonSerializerContext = new();
+builder.Services.AddSingleton(jsonSerializerContext);
 builder.Services.AddSingleton(new FileSystemRepository("Data/"));
 
 var app = builder.Build();
@@ -23,7 +24,8 @@ app.UseExceptionHandler(c => c.Run(async context =>
         ConcurrencyException => StatusCodes.Status422UnprocessableEntity,
         _ => StatusCodes.Status500InternalServerError
     };
-    await context.Response.WriteAsJsonAsync(new { error = error?.Message });
+    ErrorResponse errorResponse = new(error?.Message ?? "");
+    await context.Response.WriteAsJsonAsync(errorResponse, jsonSerializerContext.ErrorResponse);
 }));
 
 app.UseStaticFiles(
@@ -42,57 +44,11 @@ app.UseRouting();
 app.UseResponseCompression();
 
 app.MapHealthChecks("/heartbeat");
-app.MapGet("favicon.ico", () => Results.NotFound());
-app.MapGet("GetIdsFor/{aggregate}", (FileSystemRepository repository, string aggregate)
-    => repository.GetIdsForAggregate(aggregate));
-app.MapGet("Has/{aggregate}/{id}", async (FileSystemRepository repository, string aggregate, string id)
-    => await repository.Has(aggregate, id) ? Results.Ok() : Results.NotFound());
-app.MapGet("Read/{aggregate}/{id}", Read);
-app.MapPut("Append/{aggregate}/{id}/{expectedVersion:int}", Append);
-app.MapPost("Overwrite/{aggregate}/{id}/{expectedVersion:int}", Overwrite);
+app.MapGet("favicon.ico", RespondWith.Status(StatusCodes.Status404NotFound));
+app.MapGet("GetIdsFor/{aggregate}", RespondWith.GetIdsForAggregate());
+app.MapGet("Has/{aggregate}/{id}", RespondWith.Has());
+app.MapGet("Read/{aggregate}/{id}", RespondWith.Read());
+app.MapPut("Append/{aggregate}/{id}/{expectedVersion:int}", RespondWith.Append());
+app.MapPost("Overwrite/{aggregate}/{id}/{expectedVersion:int}", RespondWith.Overwrite());
 
 app.Run();
-
-static async Task Read(HttpResponse response, FileSystemRepository repository, string aggregate, string id)
-{
-    response.ContentType = "application/jsonl; charset=utf-8";
-    await response.WriteAsync(string.Join('\n', await repository.Read(aggregate, id)));
-}
-
-static async Task Append(
-    HttpRequest request,
-    FileSystemRepository repository,
-    string aggregate,
-    string id,
-    int expectedVersion
-)
-{
-    var eventLog = await ReadBodyAsListOfStrings(request);
-    await repository.Append(aggregate, id, eventLog, expectedVersion);
-}
-
-static async Task Overwrite(
-    HttpRequest request,
-    FileSystemRepository repository,
-    string aggregate,
-    string id,
-    int expectedVersion
-)
-{
-    var eventLog = await ReadBodyAsListOfStrings(request);
-    await repository.Overwrite(aggregate, id, eventLog, expectedVersion);
-}
-
-static async Task<IImmutableList<string>> ReadBodyAsListOfStrings(HttpRequest request)
-{
-    var list = ImmutableList.Create<string>();
-    using (StreamReader reader = new(request.Body))
-    {
-        var line = "";
-        while ((line = await reader.ReadLineAsync()) is not null)
-        {
-            list = list.Add(line);
-        }
-    }
-    return list;
-}
