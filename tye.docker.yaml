@@ -1,0 +1,19 @@
+name: dark
+services:
+  - name: repository-service
+    dockerFile: ../dark-repository-service/Dockerfile
+    # image: repository:latest
+    # image: ghcr.io/markusrodler/dark-repository-service:latest
+    bindings:
+      - protocol: http
+        port: 5000
+        containerPort: 5000
+    volumes:
+      - target: /app/Data/
+        source: ../dark-repository-service/Data/
+    liveness:
+      http:
+        path: /heartbeat
+    readiness:
+      http:
+        path: /heartbeat

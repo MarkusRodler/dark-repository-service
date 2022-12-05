@@ -1,0 +1,9 @@
+name: dark
+services:
+  - name: repository-service
+    project: ./Dark.csproj
+    bindings:
+      - protocol: http
+    readiness:
+      http:
+        path: /heartbeat
