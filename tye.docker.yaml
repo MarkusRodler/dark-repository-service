@@ -6,8 +6,11 @@ services:
     # image: ghcr.io/markusrodler/dark-repository-service:latest
     bindings:
       - protocol: http
-        port: 5000
+        port: 5032
         containerPort: 5000
+    env:
+      - name: AllowedHosts
+        value: "*"
     volumes:
       - target: /app/Data/
         source: ../dark-repository-service/Data/
