@@ -6,10 +6,9 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>Dark</RootNamespace>
-        <PublishReadyToRun>true</PublishReadyToRun>
-        <PublishReadyToRunComposite>true</PublishReadyToRunComposite>
         <PublishTrimmed>true</PublishTrimmed>
-        <PublishSingleFile>true</PublishSingleFile>
+        <PublishAot>true</PublishAot>
+        <StripSymbols>true</StripSymbols>
         <DebuggerSupport Condition="'$(Configuration)'=='Release'">false</DebuggerSupport>
         <InvariantGlobalization>true</InvariantGlobalization>
     </PropertyGroup>
