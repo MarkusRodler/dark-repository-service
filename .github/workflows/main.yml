@@ -53,6 +53,19 @@ jobs:
 
           docker build . --file Dockerfile --tag $IMAGE_ID:$TAG --tag $IMAGE_ID:latest --cache-from $IMAGE_ID:latest
 
+      - name: Enable Automerge
+        if: github.event_name == 'pull_request'
+        run: gh pr merge --auto --rebase "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Approve
+        if: github.event_name == 'pull_request'
+        uses: hmarr/auto-approve-action@v3.1.0
+        with:
+          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
       - name: Push image
         if: github.event_name == 'push'
         run: |
