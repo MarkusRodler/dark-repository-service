@@ -62,9 +62,9 @@ jobs:
 
       - name: Approve
         if: github.event_name == 'pull_request'
-        uses: hmarr/auto-approve-action@v3.1.0
-        with:
-          github-token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: gh pr review --approve "${{ github.event.pull_request.number }}"
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
       - name: Push image
         if: github.event_name == 'push'
