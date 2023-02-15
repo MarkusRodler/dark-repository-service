@@ -12,7 +12,7 @@ RUN dotnet publish \
     --runtime alpine-x64 \
     --self-contained true
 
-FROM mcr.microsoft.com/dotnet/runtime-deps:7.0.2-alpine3.16 AS final
+FROM mcr.microsoft.com/dotnet/runtime-deps:7.0.3-alpine3.16 AS final
 WORKDIR /app
 RUN adduser --disabled-password --home /app --gecos "" dotnetuser
 USER dotnetuser
