@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine AS publish
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS publish
 ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
 WORKDIR /app
 COPY ["Dark.csproj", "./"]
