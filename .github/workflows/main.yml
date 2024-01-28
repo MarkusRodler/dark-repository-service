@@ -23,9 +23,7 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Lint dotnet
-        run: dotnet tool update -g dotnet-format && dotnet-format --check --verbosity diagnostic # Old but working
-        # See: https://github.com/dotnet/format/issues/1461
-        # run: dotnet format --verify-no-changes --verbosity diagnostic # New, not working
+        run: dotnet format --verify-no-changes --verbosity diagnostic
 
   build:
     runs-on: ubuntu-latest
