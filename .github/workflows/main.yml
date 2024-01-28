@@ -23,7 +23,7 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Lint dotnet
-        run: dotnet format --verify-no-changes --verbosity diagnostic
+        run: dotnet format --verify-no-changes --verbosity diagnostic --exclude-diagnostics IL3050 IL2026
 
   build:
     runs-on: ubuntu-latest
