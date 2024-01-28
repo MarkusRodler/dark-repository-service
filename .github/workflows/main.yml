@@ -15,15 +15,16 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4.0.0
         with:
-          dotnet-version: "7.0.x"
+          dotnet-version: "8.0.x"
 
       - name: Lint dotnet
         run: dotnet tool update -g dotnet-format && dotnet-format --check --verbosity diagnostic # Old but working
+        # See: https://github.com/dotnet/format/issues/1461
         # run: dotnet format --verify-no-changes --verbosity diagnostic # New, not working
 
   build:
@@ -32,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
 
       - name: Log into registry
         uses: docker/login-action@v3.0.0
@@ -80,7 +81,7 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4.1.1
         with:
           repository: "MarkusRodler/dark-server"
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}

@@ -9,8 +9,7 @@
     "files.trimFinalNewlines": true,
     "files.insertFinalNewline": true,
     "files.exclude": {
-        "**/bin": true,
-        "**/obj": true
+        "**/artifacts": true
     },
     "git.rebaseWhenSync": true,
     "csharp.semanticHighlighting.enabled": true,
