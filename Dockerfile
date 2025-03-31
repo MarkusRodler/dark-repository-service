@@ -1,20 +1,21 @@
-FROM mcr.microsoft.com/dotnet/nightly/sdk:8.0-jammy-aot AS publish
+FROM mcr.microsoft.com/dotnet/nightly/sdk:9.0.201-noble-aot AS publish
 ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
 WORKDIR /app
 COPY . .
 RUN --mount=type=cache,target=/root/.nuget \
     --mount=type=cache,target=/app/artifacts \
-    dotnet publish \
+    dotnet publish Service \
     --output /app/publish \
     --runtime linux-x64 \
     --self-contained true \
     /p:DebugType=None \
     /p:DebugSymbols=false
+RUN rm -rf publish/*.dbg \
+    publish/*.Development.json
 
-FROM mcr.microsoft.com/dotnet/nightly/runtime-deps:8.0-jammy-chiseled-aot
+FROM mcr.microsoft.com/dotnet/nightly/runtime-deps:9.0.3-noble-chiseled-aot
 WORKDIR /app
-COPY --from=publish /app/publish/appsettings.json .
-COPY --from=publish /app/publish/Dark .
+COPY --from=publish /app/publish .
 USER $APP_UID
 EXPOSE 8080
-ENTRYPOINT ["./Dark"]
+ENTRYPOINT ["./Service"]

@@ -1,9 +1,12 @@
 {
+    "csharp.semanticHighlighting.enabled": true,
+    "dotnet.completion.showCompletionItemsFromUnimportedNamespaces": true,
     "editor.detectIndentation": false,
     "editor.formatOnSave": true,
     "editor.rulers": [
         120
     ],
+    "files.autoSaveWhenNoErrors": true,
     "files.eol": "\n",
     "files.trimTrailingWhitespace": true,
     "files.trimFinalNewlines": true,
@@ -12,8 +15,11 @@
         "**/artifacts": true
     },
     "git.rebaseWhenSync": true,
-    "csharp.semanticHighlighting.enabled": true,
     "omnisharp.enableEditorConfigSupport": true,
-    "omnisharp.enableImportCompletion": true,
-    "omnisharp.enableRoslynAnalyzers": true
+    "omnisharp.enableRoslynAnalyzers": true,
+    "tasks.statusbar.limit": 13,
+    "[yaml]": {
+        "editor.insertSpaces": true,
+        "editor.tabSize": 2
+    }
 }

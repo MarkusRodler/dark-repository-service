@@ -1,0 +1,122 @@
+name: Service
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - .github/dependabot.yml
+      - .vscode/**
+      - .editorconfig
+      - .gitignore
+  pull_request:
+    paths-ignore:
+      - .github/dependabot.yml
+      - .vscode/**
+      - .editorconfig
+      - .gitignore
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          path: main
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4.3.1
+        with:
+          dotnet-version: 9.0
+
+      - name: Lint dotnet
+        run: dotnet format --verify-no-changes --verbosity detailed main
+
+      - name: Log into registry
+        uses: docker/login-action@v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set Repository, Image and Tag
+        id: env
+        run: |
+          REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+          echo "REPOSITORY=$REPOSITORY" >> $GITHUB_OUTPUT
+
+          IMAGE_ID=ghcr.io/${REPOSITORY}
+          echo "IMAGE_ID=$IMAGE_ID" >> $GITHUB_OUTPUT
+
+          TAG=$(date +%Y.%m.%d.)${{ github.run_number }}
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        env:
+          TAG: ${{ steps.env.outputs.TAG }}
+          IMAGE_ID: ${{ steps.env.outputs.IMAGE_ID }}
+        run: |
+          docker pull $IMAGE_ID:latest
+          docker build main \
+            --file main/Dockerfile \
+            --tag $IMAGE_ID:$TAG \
+            --tag $IMAGE_ID:latest \
+            --build-arg VERSION=$TAG \
+            --cache-from $IMAGE_ID:latest
+
+      - name: Enable Automerge
+        if: github.event_name == 'pull_request'
+        run: gh pr merge --auto --rebase "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        working-directory: main
+
+      - name: Approve
+        if: github.event_name == 'pull_request'
+        run: gh pr review --approve "${{ github.event.pull_request.number }}"
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        working-directory: main
+
+      - name: Push image
+        if: github.event_name == 'push' && !github.event.dryrun
+        env:
+          IMAGE_ID: ${{ steps.env.outputs.IMAGE_ID }}
+        run: docker push --all-tags $IMAGE_ID
+
+      - name: Checkout dark-server
+        if: github.event_name == 'push' && !github.event.dryrun
+        uses: actions/checkout@v4.2.2
+        with:
+          repository: MarkusRodler/dark-server
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          path: kubernetes
+
+      - name: Bump version
+        if: github.event_name == 'push' && !github.event.dryrun
+        env:
+          REPOSITORY: ${{ steps.env.outputs.REPOSITORY }}
+          TAG: ${{ steps.env.outputs.TAG }}
+        run: sed -i -E "s|$REPOSITORY:[0-9\.]+$|$REPOSITORY:$TAG|" kubernetes/Repository/RepositoryService.yaml
+
+      - name: Push version
+        if: github.event_name == 'push' && !github.event.dryrun
+        env:
+          TAG: ${{ steps.env.outputs.TAG }}
+        run: |
+          git -C kubernetes config user.name ${{ secrets.GIT_USER_NAME }}
+          git -C kubernetes config user.email ${{ secrets.GIT_USER_EMAIL }}
+          git -C kubernetes add .
+          git -C kubernetes commit -m "⬆️ Erhöhe Repository Service auf $TAG"
+          git -C kubernetes push || echo "No changes to commit"

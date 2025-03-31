@@ -1,0 +1,60 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "dotnet run",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "watch",
+                "run",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "options": {
+                "cwd": "${workspaceFolder}/Service",
+                "statusbar": {
+                    "label": "$(debug-start) dotnet run"
+                }
+            }
+        },
+        {
+            "label": "build",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile",
+            "options": {
+                "cwd": "${workspaceFolder}/Service",
+                "statusbar": {
+                    "label": "$(debug-start) build"
+                }
+            }
+        },
+        {
+            "label": "dotnet format --verify-no-changes",
+            "type": "process",
+            "command": "dotnet",
+            "args": [
+                "format",
+                "--verify-no-changes",
+                "-v=d"
+            ],
+            "presentation": {
+                "echo": false,
+                "panel": "dedicated",
+                "clear": true
+            },
+            "options": {
+                "statusbar": {
+                    "label": "$(code) dotnet format"
+                }
+            }
+        }
+    ]
+}

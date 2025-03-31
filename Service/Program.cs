@@ -42,7 +42,7 @@ app.UseRouting();
 
 app.UseResponseCompression();
 
-app.MapHealthChecks("/heartbeat");
+app.MapHealthChecks("/heartbeat").DisableHttpMetrics();
 app.MapShortCircuit(404, "favicon.ico");
 
 app.MapGet("GetIdsFor/{aggregate}", async (string aggregate, FileSystemRepository repository)
