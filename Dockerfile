@@ -13,7 +13,7 @@ RUN --mount=type=cache,target=/root/.nuget \
 RUN rm -rf publish/*.dbg \
     publish/*.Development.json
 
-FROM mcr.microsoft.com/dotnet/nightly/runtime-deps:9.0.5-noble-chiseled-aot
+FROM mcr.microsoft.com/dotnet/nightly/runtime-deps:9.0.6-noble-chiseled-aot
 WORKDIR /app
 COPY --from=publish /app/publish .
 USER $APP_UID
