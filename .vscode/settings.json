@@ -21,5 +21,13 @@
     "[yaml]": {
         "editor.insertSpaces": true,
         "editor.tabSize": 2
+    },
+    "rest-client.environmentVariables": {
+        "Lokal": {
+            "baseUrl": "http://localhost:5032"
+        },
+        "Produktiv": {
+            "baseUrl": "localhost"
+        }
     }
 }

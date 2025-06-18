@@ -1,0 +1,37 @@
+@firstDummyId = {{GetIdsFor.response.body.$[0]}}
+
+# @name Heartbeat
+GET {{baseUrl}}/Heartbeat
+###
+
+# @name NoFavicon
+GET {{baseUrl}}/favicon.ico
+###
+
+# @name GetIdsFor
+GET {{baseUrl}}/GetIdsFor/Dummy
+###
+
+# @name Has
+GET {{baseUrl}}/Has/Dummy/{{firstDummyId}}
+###
+
+# @name Read
+GET {{baseUrl}}/Read/Dummy/{{firstDummyId}}
+###
+
+# @name Append
+PUT {{baseUrl}}/Append/Dummy/{{firstDummyId}}/3
+Content-Type:  application/json
+
+{"$type":"DummyEvent4","id":"{{$guid}}","creationTime":"{{$datetime iso8601}}","sourceId":"{{$guid}}"}
+###
+
+# @name Overwrite
+POST {{baseUrl}}/Overwrite/Dummy/{{firstDummyId}}/4
+Content-Type:  application/json
+
+{"$type":"DummyEvent1","id":"{{$guid}}","creationTime":"{{$datetime iso8601}}","sourceId":"{{$guid}}"}
+{"$type":"DummyEvent2","id":"{{$guid}}","creationTime":"{{$datetime iso8601}}","sourceId":"{{$guid}}"}
+{"$type":"DummyEvent3","id":"{{$guid}}","creationTime":"{{$datetime iso8601}}","sourceId":"{{$guid}}"}
+###
