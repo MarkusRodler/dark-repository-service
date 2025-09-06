@@ -1,6 +1,5 @@
-using Dark;
-using System.Text.Json.Serialization;
-
 [JsonSerializable(typeof(ErrorResponse))]
+[JsonSerializable(typeof(Event))]
+[JsonSerializable(typeof(IAsyncEnumerable<string>))]
 [JsonSerializable(typeof(string[]))]
-sealed partial class MessageSerializerContext : JsonSerializerContext;
+sealed partial class JsonContext : JsonSerializerContext;

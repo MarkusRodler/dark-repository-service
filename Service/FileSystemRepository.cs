@@ -12,46 +12,86 @@ public sealed class FileSystemRepository(string folder)
         return Task.FromResult(files.Select(x => x[path.Length..^Suffix.Length]).ToArray());
     }
 
-    public Task<bool> Has(string aggregate, string id) => Task.FromResult(File.Exists(GetFilePath(aggregate, id)));
+    public Task<bool> Has(Data data) => Task.FromResult(File.Exists(GetFilePath(data)));
 
-    public async Task<string[]> Read(string aggregate, string id)
-        => await File.ReadAllLinesAsync(GetFilePath(aggregate, id));
-
-    public async Task Append(string aggregate, string id, string[] entries, int expectedVersion)
+    public async IAsyncEnumerable<string> Read(Data data, Condition cond, [EnumeratorCancellation] CancellationToken ct)
     {
-        await EnsureNoConcurrency(aggregate, id, expectedVersion);
+        if (!await Has(data)) yield break;
 
-        var tempFile = Path.GetTempFileName();
-        var destFile = GetFilePath(aggregate, id);
-        Directory.CreateDirectory(folder + aggregate);
-        if (File.Exists(destFile)) File.Copy(destFile, tempFile, overwrite: true);
+        var groups = QueryParser.Parse(cond.Query ?? "");
+        var version = 0;
+        await foreach (var line in File.ReadLinesAsync(GetFilePath(data), ct))
+        {
+            version++;
+            if (version <= cond.Version) continue;
 
-        await File.AppendAllLinesAsync(tempFile, entries);
-        ReplaceFile(tempFile, destFile);
+            if (cond.Query.IsNotFilled()
+                || JsonSerializer.Deserialize(line, JsonContext.Default.Event) is { } e && e.Matches(groups))
+            {
+                yield return line;
+            }
+        }
     }
 
-    public async Task Overwrite(string aggregate, string id, string[] entries, int expectedVersion)
+    public async Task Append(Data data, IEnumerable<string> entries, Condition condition, CancellationToken ct)
     {
-        await EnsureNoConcurrency(aggregate, id, expectedVersion);
+        var destFile = GetFilePath(data);
+        Directory.CreateDirectory(folder + data.Aggregate);
 
-        var tempFile = Path.GetTempFileName();
-        await File.WriteAllLinesAsync(tempFile, entries);
-        Directory.CreateDirectory(folder + aggregate);
-        ReplaceFile(tempFile, GetFilePath(aggregate, id));
+        using FileStream fs = new(destFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read, 4096, true);
+        try
+        {
+            fs.Lock(0, 0);
+            await EnsureNoConcurrency(data, condition, ct);
+
+            var currentVersion = fs.LastVersion() + 1;
+            fs.Seek(0, SeekOrigin.End);
+
+            var processedEntries = entries.Select(x => x.EndsWith('}') ? $"{x[..^1]},\"$ver\":{currentVersion++}}}" : x);
+
+            await fs.WriteAsync(Encoding.UTF8.GetBytes(processedEntries.Join('\n') + '\n'), ct);
+            await fs.FlushAsync(CancellationToken.None);
+        }
+        catch (IOException e) when (e.Message.Contains("is being used by another process"))
+        {
+            fs.Unlock(0, 0);
+            fs.Dispose();
+            await Task.Delay(100, ct);
+            await Append(data, entries, condition, ct);
+        }
+        finally
+        {
+            fs.Unlock(0, 0);
+            fs.Dispose();
+        }
     }
 
-    async Task EnsureNoConcurrency(string aggregate, string id, int expectedVersion)
+    public async Task Overwrite(Data data, string[] entries, Condition condition, CancellationToken ct)
     {
-        if (expectedVersion > -1 && await CurrentVersion(aggregate, id) != expectedVersion)
+        await EnsureNoConcurrency(data, condition, ct);
+
+        var tempFile = Path.GetTempFileName();
+        await File.WriteAllLinesAsync(tempFile, entries, ct);
+        Directory.CreateDirectory(folder + data.Aggregate);
+        ReplaceFile(tempFile, GetFilePath(data));
+    }
+
+    async Task EnsureNoConcurrency(Data data, Condition condition, CancellationToken ct)
+    {
+        if (condition.Query.IsFilled())
+        {
+            await foreach (var _ in Read(data, condition, ct)) throw new ConcurrencyException();
+        }
+        else if (condition.Version > -1 && await CurrentVersion(data, ct) != condition.Version)
         {
             throw new ConcurrencyException();
         }
     }
 
-    async Task<int> CurrentVersion(string aggregate, string id)
-        => await Has(aggregate, id) ? (await File.ReadAllLinesAsync(GetFilePath(aggregate, id))).Length : 0;
+    async Task<int> CurrentVersion(Data data, CancellationToken ct)
+        => await Has(data) ? (await File.ReadAllLinesAsync(GetFilePath(data), ct)).Length : 0;
 
-    string GetFilePath(string aggregate, string id) => $"{folder}{aggregate}/{id}{Suffix}";
+    string GetFilePath(Data data) => $"{folder}{data.Aggregate}/{data.Id}{Suffix}";
 
     static void ReplaceFile(string source, string dest)
     {

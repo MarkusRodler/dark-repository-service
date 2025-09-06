@@ -1,15 +1,10 @@
-using Dark;
-using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.FileProviders;
-
 var builder = WebApplication.CreateSlimBuilder(args);
 builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 builder.Services.AddHealthChecks();
 builder.Services.AddResponseCompression();
 
-builder.Services.ConfigureHttpJsonOptions(x => x.SerializerOptions.TypeInfoResolver = MessageSerializerContext.Default);
+builder.Services.ConfigureHttpJsonOptions(x => x.SerializerOptions.TypeInfoResolver = JsonContext.Default);
 builder.Services.AddSingleton(new FileSystemRepository("Data/"));
 
 var app = builder.Build();
@@ -24,11 +19,11 @@ app.UseExceptionHandler(c => c.Run(async context =>
         _ => StatusCodes.Status500InternalServerError
     };
     ErrorResponse errorResponse = new(error?.Message ?? "");
-    await context.Response.WriteAsJsonAsync(errorResponse, MessageSerializerContext.Default.ErrorResponse);
+    await context.Response.WriteAsJsonAsync(errorResponse, JsonContext.Default.ErrorResponse);
 }));
 
 app.UseStaticFiles(
-    new StaticFileOptions
+    new StaticFileOptions()
     {
         ContentTypeProvider = new FileExtensionContentTypeProvider(
             new Dictionary<string, string>() { { ".jsonl", "application/jsonl; charset=utf-8" } }
@@ -45,25 +40,50 @@ app.UseResponseCompression();
 app.MapHealthChecks("/heartbeat").DisableHttpMetrics();
 app.MapShortCircuit(404, "favicon.ico");
 
-app.MapGet("GetIdsFor/{aggregate}", async (string aggregate, FileSystemRepository repository)
-    => Results.Json(await repository.GetIdsForAggregate(aggregate), MessageSerializerContext.Default));
+app.MapGet("GetIdsFor/{aggregate}", async (string aggregate, FileSystemRepository repo)
+    => Results.Json(await repo.GetIdsForAggregate(aggregate), JsonContext.Default));
 
-app.MapGet("Has/{aggregate}/{id}", async (string aggregate, string id, FileSystemRepository repository)
-    => (await repository.Has(aggregate, id)) ? Results.Ok() : Results.NotFound());
+app.MapGet("Has/{aggregate}/{id}", async ([AsParameters] Data data, FileSystemRepository repo)
+    => (await repo.Has(data)) ? Results.Ok() : Results.NotFound());
 
-app.MapGet("Read/{aggregate}/{id}", async (string aggregate, string id, FileSystemRepository repository)
-    => Results.Text(string.Join('\n', await repository.Read(aggregate, id)), "application/jsonl; charset=utf-8"));
+app.MapGet("Read/{aggregate}/{id}/{afterLine:int?}", async ([AsParameters] Read x) =>
+{
+    x.Response.ContentType = "application/jsonl; charset=utf-8";
+    await foreach (var @event in x.Repo.Read(new(x.Aggregate, x.Id), new(x.Query, x.AfterLine), x.Ct))
+    {
+        await x.Response.WriteAsync(@event + '\n', x.Ct);
+    }
+});
 
-app.MapPut(
-    "Append/{aggregate}/{id}/{expectedVersion:int}",
-    async (string aggregate, string id, int expectedVersion, Stream body, FileSystemRepository repository)
-        => await repository.Append(aggregate, id, await ReadAsStringArray(body), expectedVersion));
+app.MapPut("Append/{aggregate}/{id}/{version:int}", async ([AsParameters] Write x)
+    => await x.Repo.Append(x.Data, await x.Body.AsStringArray(x.Ct), x.Condition, x.Ct));
 
-app.MapPost(
-    "Overwrite/{aggregate}/{id}/{expectedVersion:int}",
-    async (string aggregate, string id, int expectedVersion, Stream body, FileSystemRepository repository)
-        => await repository.Overwrite(aggregate, id, await ReadAsStringArray(body), expectedVersion));
+app.MapPost("Overwrite/{aggregate}/{id}/{version:int}", async ([AsParameters] Write x)
+    => await x.Repo.Overwrite(x.Data, await x.Body.AsStringArray(x.Ct), x.Condition, x.Ct));
 
 app.Run();
 
-static async Task<string[]> ReadAsStringArray(Stream body) => (await new StreamReader(body).ReadToEndAsync()).Split('\n');
+struct Read
+{
+    public string Aggregate { get; set; }
+    public string Id { get; set; }
+    [FromQuery] public string? Query { get; set; }
+    public FileSystemRepository Repo { get; set; }
+    public HttpResponse Response { get; set; }
+    public CancellationToken Ct { get; set; }
+    public int? AfterLine { get; set; }
+}
+
+struct Write
+{
+    public string Aggregate { get; set; }
+    public string Id { get; set; }
+    [FromQuery] public string? FailIf { get; set; }
+    public Stream Body { get; set; }
+    public FileSystemRepository Repo { get; set; }
+    public CancellationToken Ct { get; set; }
+    public int? Version { get; set; }
+
+    public readonly Data Data => new(Aggregate, Id);
+    public readonly Condition Condition => new(FailIf, Version);
+}

@@ -17,7 +17,11 @@ GET {{baseUrl}}/Has/Dummy/{{firstDummyId}}
 ###
 
 # @name Read
-GET {{baseUrl}}/Read/Dummy/{{firstDummyId}}
+GET {{baseUrl}}/Read/Portfolio/Portfolio?query=types=SharePurchasedEvent,tags=a1|a2:b1
+###
+
+# @name ReadAfter
+GET {{baseUrl}}/Read/Portfolio/Portfolio/3?query=types=SharePurchasedEvent,tags=a1|a2:b1
 ###
 
 # @name Append
