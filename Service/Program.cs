@@ -55,11 +55,11 @@ app.MapGet("Read/{aggregate}/{id}/{afterLine:int?}", async ([AsParameters] Read 
     }
 });
 
-app.MapPut("Append/{aggregate}/{id}/{version:int}", async ([AsParameters] Write x, [FromBody] Stream body)
-    => await x.Repo.Append(x.Data, await body.AsStringArray(x.Ct), x.Condition, x.Ct));
+app.MapPut("Append/{aggregate}/{id}/{version:int}", async ([AsParameters] Write x, HttpRequest req)
+    => await x.Repo.Append(x.Data, await req.Body.AsStringArray(x.Ct), x.Condition, x.Ct));
 
-app.MapPost("Overwrite/{aggregate}/{id}/{version:int}", async ([AsParameters] Write x, [FromBody] Stream body)
-    => await x.Repo.Overwrite(x.Data, await body.AsStringArray(x.Ct), x.Condition, x.Ct));
+app.MapPost("Overwrite/{aggregate}/{id}/{version:int}", async ([AsParameters] Write x, HttpRequest req)
+    => await x.Repo.Overwrite(x.Data, await req.Body.AsStringArray(x.Ct), x.Condition, x.Ct));
 
 app.Run();
 
