@@ -38,10 +38,13 @@ public sealed class FileSystemRepository(string folder)
         var destFile = GetFilePath(data);
         Directory.CreateDirectory(folder + data.Aggregate);
 
+        Console.WriteLine("Append: FileStream");
         using FileStream fs = new(destFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read, 4096, true);
         try
         {
+            Console.WriteLine("Append: Lock");
             fs.Lock(0, 0);
+            Console.WriteLine("Append: Locked");
             await EnsureNoConcurrency(data, condition, ct);
 
             var currentVersion = fs.LastVersion() + 1;
@@ -51,9 +54,11 @@ public sealed class FileSystemRepository(string folder)
 
             await fs.WriteAsync(Encoding.UTF8.GetBytes(processedEntries.Join('\n') + '\n'), ct);
             await fs.FlushAsync(CancellationToken.None);
+            Console.WriteLine("Append: Done");
         }
         catch (IOException e) when (e.Message.Contains("is being used by another process"))
         {
+            Console.WriteLine("Append: IOException - Retry");
             fs.Unlock(0, 0);
             fs.Dispose();
             await Task.Delay(100, ct);
@@ -64,6 +69,7 @@ public sealed class FileSystemRepository(string folder)
             fs.Unlock(0, 0);
             fs.Dispose();
         }
+        Console.WriteLine("Append: Finished");
     }
 
     public async Task Overwrite(Data data, string[] entries, Condition condition, CancellationToken ct)
