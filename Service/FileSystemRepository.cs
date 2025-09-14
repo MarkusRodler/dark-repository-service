@@ -1,18 +1,17 @@
 namespace Dark;
 
-public sealed class FileSystemRepository(string folder)
+public sealed class FileSystemRepository(string dataFolder, string lockFolder)
 {
     const string Suffix = ".jsonl";
-    readonly string folder = folder;
 
     public Task<string[]> GetIdsForAggregate(string aggregate)
     {
-        var path = $"{folder}{aggregate}/";
+        var path = $"{dataFolder}{aggregate}/";
         var files = Directory.EnumerateFiles(path, '*' + Suffix);
         return Task.FromResult(files.Select(x => x[path.Length..^Suffix.Length]).ToArray());
     }
 
-    public Task<bool> Has(Data data) => Task.FromResult(File.Exists(GetFilePath(data)));
+    public Task<bool> Has(Data data) => Task.FromResult(File.Exists(DataFilePath(data)));
 
     public async IAsyncEnumerable<string> Read(Data data, Condition cond, [EnumeratorCancellation] CancellationToken ct)
     {
@@ -20,7 +19,7 @@ public sealed class FileSystemRepository(string folder)
 
         var groups = QueryParser.Parse(cond.Query ?? "");
         var version = 0;
-        await foreach (var line in File.ReadLinesAsync(GetFilePath(data), ct))
+        await foreach (var line in File.ReadLinesAsync(DataFilePath(data), ct))
         {
             version++;
             if (version <= cond.Version) continue;
@@ -35,13 +34,18 @@ public sealed class FileSystemRepository(string folder)
 
     public async Task Append(Data data, IEnumerable<string> entries, Condition condition, CancellationToken ct)
     {
-        var destFile = GetFilePath(data);
-        Directory.CreateDirectory(folder + data.Aggregate);
+        var dataFilePath = DataFilePath(data);
+        var lockFilePath = LockFilePath(data);
+        if (!File.Exists(AggregateLockFolderPath(data))) Directory.CreateDirectory(AggregateLockFolderPath(data));
 
-        using FileStream fs = new(destFile, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read, 4096, true);
+        if (!File.Exists(AggregateDataFolderPath(data))) Directory.CreateDirectory(AggregateDataFolderPath(data));
+
+        FileStream? fsLock = null;
+        using FileStream fs = new(dataFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read, 4096, true);
         try
         {
-            fs.Lock(0, 0);
+            fsLock = new(lockFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 4096, true);
+            fsLock.Lock(0, 0);
             await EnsureNoConcurrency(data, condition, ct);
 
             var currentVersion = fs.LastVersion() + 1;
@@ -54,15 +58,18 @@ public sealed class FileSystemRepository(string folder)
         }
         catch (IOException e) when (e.Message.Contains("is being used by another process"))
         {
-            fs.Unlock(0, 0);
+            Console.WriteLine($"File {lockFilePath} is locked, retrying...");
             fs.Dispose();
+            fsLock?.Unlock(0, 0);
+            fsLock?.Dispose();
             await Task.Delay(100, ct);
             await Append(data, entries, condition, ct);
         }
         finally
         {
-            fs.Unlock(0, 0);
             fs.Dispose();
+            fsLock?.Unlock(0, 0);
+            fsLock?.Dispose();
         }
     }
 
@@ -72,8 +79,8 @@ public sealed class FileSystemRepository(string folder)
 
         var tempFile = Path.GetTempFileName();
         await File.WriteAllLinesAsync(tempFile, entries, ct);
-        Directory.CreateDirectory(folder + data.Aggregate);
-        ReplaceFile(tempFile, GetFilePath(data));
+        Directory.CreateDirectory(dataFolder + data.Aggregate);
+        ReplaceFile(tempFile, DataFilePath(data));
     }
 
     async Task EnsureNoConcurrency(Data data, Condition condition, CancellationToken ct)
@@ -89,9 +96,14 @@ public sealed class FileSystemRepository(string folder)
     }
 
     async Task<int> CurrentVersion(Data data, CancellationToken ct)
-        => await Has(data) ? (await File.ReadAllLinesAsync(GetFilePath(data), ct)).Length : 0;
+        => await Has(data) ? (await File.ReadAllLinesAsync(DataFilePath(data), ct)).Length : 0;
 
-    string GetFilePath(Data data) => $"{folder}{data.Aggregate}/{data.Id}{Suffix}";
+    string AggregatePathSegment(Data data) => $"{data.Aggregate}/";
+    string AggregateDataFolderPath(Data data) => $"{dataFolder}{AggregatePathSegment(data)}";
+    string AggregateLockFolderPath(Data data) => $"{lockFolder}{AggregatePathSegment(data)}";
+    string IdPathSegment(Data data) => $"{data.Id}{Suffix}";
+    string DataFilePath(Data data) => $"{AggregateDataFolderPath(data)}{IdPathSegment(data)}";
+    string LockFilePath(Data data) => $"{AggregateLockFolderPath(data)}{IdPathSegment(data)}.lock";
 
     static void ReplaceFile(string source, string dest)
     {

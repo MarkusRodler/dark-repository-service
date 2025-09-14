@@ -17,7 +17,7 @@ public static class FileStreamExtension
         var input = Encoding.UTF8.GetString(buffer);
 
         var start = input.IndexOf(VerField);
-        if (start < 0) fs.LineCount();
+        if (start < 0) return fs.LineCount();
 
         start += VerField.Length;
         var end = input.IndexOfAny([',', '}', ' '], start);

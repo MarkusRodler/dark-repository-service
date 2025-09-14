@@ -5,7 +5,7 @@ builder.Services.AddHealthChecks();
 builder.Services.AddResponseCompression();
 
 builder.Services.ConfigureHttpJsonOptions(x => x.SerializerOptions.TypeInfoResolver = JsonContext.Default);
-builder.Services.AddSingleton(new FileSystemRepository("Data/"));
+builder.Services.AddSingleton(new FileSystemRepository("Data/", "Lock/"));
 
 var app = builder.Build();
 
