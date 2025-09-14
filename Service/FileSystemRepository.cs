@@ -34,20 +34,25 @@ public sealed class FileSystemRepository(string dataFolder, string lockFolder)
 
     public async Task Append(Data data, IEnumerable<string> entries, Condition condition, CancellationToken ct)
     {
+        Console.WriteLine($"Append {data.Aggregate}/{data.Id}");
         var dataFilePath = DataFilePath(data);
         var lockFilePath = LockFilePath(data);
+
+        Console.WriteLine($"Data folder exists: {Directory.Exists(AggregateDataFolderPath(data))}");
         if (!File.Exists(AggregateLockFolderPath(data))) Directory.CreateDirectory(AggregateLockFolderPath(data));
 
+        Console.WriteLine($"Lock folder exists: {Directory.Exists(AggregateLockFolderPath(data))}");
         if (!File.Exists(AggregateDataFolderPath(data))) Directory.CreateDirectory(AggregateDataFolderPath(data));
 
+        Console.WriteLine("Opening file stream for " + dataFilePath);
         FileStream? fsLock = null;
         using FileStream fs = new(dataFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.Read, 4096, true);
         try
         {
             fsLock = new(lockFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 4096, true);
-            System.Console.WriteLine("Acquire lock on " + lockFilePath);
+            Console.WriteLine("Acquire lock on " + lockFilePath);
             fsLock.Lock(0, 0);
-            System.Console.WriteLine("Lock acquired on " + lockFilePath);
+            Console.WriteLine("Lock acquired on " + lockFilePath);
             await EnsureNoConcurrency(data, condition, ct);
 
             var currentVersion = fs.LastVersion() + 1;
