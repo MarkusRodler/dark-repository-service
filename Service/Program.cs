@@ -55,11 +55,29 @@ app.MapGet("Read/{aggregate}/{id}/{afterLine:int?}", async ([AsParameters] Read 
     }
 });
 
-app.MapPut("Append/{aggregate}/{id}/{version:int}", async ([AsParameters] Write x)
-    => await x.Repo.Append(x.Data, await x.Body.AsStringArray(x.Ct), x.Condition, x.Ct));
+app.MapPut(
+    "Append/{aggregate}/{id}/{version:int}",
+    async (
+        string aggregate,
+        string id,
+        int version,
+        Stream body,
+        FileSystemRepository repo,
+        [FromQuery] string? failIf,
+        CancellationToken ct
+    ) => await repo.Append(new(aggregate, id), await body.AsStringArray(ct), new(failIf, version), ct));
 
-app.MapPost("Overwrite/{aggregate}/{id}/{version:int}", async ([AsParameters] Write x)
-    => await x.Repo.Overwrite(x.Data, await x.Body.AsStringArray(x.Ct), x.Condition, x.Ct));
+app.MapPost(
+    "Overwrite/{aggregate}/{id}/{version:int}",
+    async (
+        string aggregate,
+        string id,
+        int version,
+        Stream body,
+        FileSystemRepository repo,
+        [FromQuery] string? failIf,
+        CancellationToken ct
+    ) => await repo.Overwrite(new(aggregate, id), await body.AsStringArray(ct), new(failIf, version), ct));
 
 app.Run();
 
@@ -72,18 +90,4 @@ struct Read
     public HttpResponse Response { get; set; }
     public CancellationToken Ct { get; set; }
     public int? AfterLine { get; set; }
-}
-
-struct Write
-{
-    public string Aggregate { get; set; }
-    public string Id { get; set; }
-    [FromQuery] public string? FailIf { get; set; }
-    public Stream Body { get; set; }
-    public FileSystemRepository Repo { get; set; }
-    public CancellationToken Ct { get; set; }
-    public int? Version { get; set; }
-
-    public readonly Data Data => new(Aggregate, Id);
-    public readonly Condition Condition => new(FailIf, Version);
 }
