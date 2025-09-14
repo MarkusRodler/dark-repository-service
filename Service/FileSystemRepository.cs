@@ -45,7 +45,9 @@ public sealed class FileSystemRepository(string dataFolder, string lockFolder)
         try
         {
             fsLock = new(lockFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 4096, true);
+            System.Console.WriteLine("Acquire lock on " + lockFilePath);
             fsLock.Lock(0, 0);
+            System.Console.WriteLine("Lock acquired on " + lockFilePath);
             await EnsureNoConcurrency(data, condition, ct);
 
             var currentVersion = fs.LastVersion() + 1;
