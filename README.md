@@ -66,7 +66,7 @@ PUT /Append/{aggregate:string}/{id:string}/{version:int}
 Hängt neue Daten an das Aggregat/ID an.
 Body: JSONL (Text, Zeile pro Event)
 Optional: `failIf` als Query-Parameter Details siehe: [DCB](#dcb).
-**Warnung:** Verändert gleichzeitig das Event indem es ein weiteres Metadaten-Feld `$ver` einfügt.
+**Warnung:** Verändert gleichzeitig das Event indem es ein weiteres Metadaten-Feld `Version` einfügt.
 Dieses gibt an welche Version es ist.
 Die Version deckt sich mit der jeweiligen Zeilennummer.
 Von daher ist es unerlässlich, dass die Anzahl der Zeilen niemals verändert werden.

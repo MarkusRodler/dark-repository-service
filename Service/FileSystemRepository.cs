@@ -58,9 +58,9 @@ public sealed class FileSystemRepository(string dataFolder, string lockFolder)
             var currentVersion = fs.LastVersion() + 1;
             fs.Seek(0, SeekOrigin.End);
 
-            var processedEntries = entries.Select(x => x.EndsWith('}') ? $"{x[..^1]},\"$ver\":{currentVersion++}}}" : x);
+            var moddedEntries = entries.Select(x => x.EndsWith('}') ? $"{x[..^1]},\"Version\":{currentVersion++}}}" : x);
 
-            await fs.WriteAsync(Encoding.UTF8.GetBytes(processedEntries.Join('\n') + '\n'), ct);
+            await fs.WriteAsync(Encoding.UTF8.GetBytes(moddedEntries.Join('\n') + '\n'), ct);
             await fs.FlushAsync(CancellationToken.None);
         }
         catch (IOException e) when (e.Message.Contains("is being used by another process"))

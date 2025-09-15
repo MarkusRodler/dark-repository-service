@@ -35,7 +35,7 @@ Content-Type:  application/json
 POST {{baseUrl}}/Overwrite/Dummy/{{firstDummyId}}/4
 Content-Type:  application/json
 
-{"$type":"DummyEvent1","id":"{{$guid}}","creationTime":"{{$datetime iso8601}}","sourceId":"{{$guid}}"}
-{"$type":"DummyEvent2","id":"{{$guid}}","creationTime":"{{$datetime iso8601}}","sourceId":"{{$guid}}"}
-{"$type":"DummyEvent3","id":"{{$guid}}","creationTime":"{{$datetime iso8601}}","sourceId":"{{$guid}}"}
+{"$type":"DummyEvent1","id":"{{$guid}}","creationTime":"{{$datetime iso8601}}","sourceId":"{{$guid}}","version":1}
+{"$type":"DummyEvent2","id":"{{$guid}}","creationTime":"{{$datetime iso8601}}","sourceId":"{{$guid}}","version":2}
+{"$type":"DummyEvent3","id":"{{$guid}}","creationTime":"{{$datetime iso8601}}","sourceId":"{{$guid}}","version":3}
 ###

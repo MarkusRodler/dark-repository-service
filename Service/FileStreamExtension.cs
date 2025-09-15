@@ -2,7 +2,7 @@ namespace Dark;
 
 public static class FileStreamExtension
 {
-    const string VerField = "\"$ver\":";
+    const string VerField = "\"Version\":";
 
     public static int LastVersion(this FileStream fs)
     {
