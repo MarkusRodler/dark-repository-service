@@ -8,12 +8,14 @@ on:
       - .vscode/**
       - .editorconfig
       - .gitignore
+      - README.md
   pull_request:
     paths-ignore:
       - .github/dependabot.yml
       - .vscode/**
       - .editorconfig
       - .gitignore
+      - README.md
 
 env:
   DOTNET_NOLOGO: true
