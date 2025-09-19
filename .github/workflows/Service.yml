@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v5.0.0
         with:
           path: main
 
@@ -97,7 +97,7 @@ jobs:
 
       - name: Checkout dark-server
         if: github.event_name == 'push' && !github.event.dryrun
-        uses: actions/checkout@v5
+        uses: actions/checkout@v5.0.0
         with:
           repository: MarkusRodler/dark-server
           token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
