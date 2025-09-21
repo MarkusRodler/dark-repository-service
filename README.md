@@ -51,9 +51,9 @@ Liefert die Daten als Stream optional ab einer bestimmten Zeile. Es kann ein Que
 Antwort:
 `Content-Type: application/jsonl; charset=utf-8`
 ```jsonl
-{"$type":"DummyCreatedEvent","id":"275c4942-85b2-40f0-a699-a6dc007b1afa",tags:["tag1key:tag1value", "tag2key:tag2value"], "title":"Dummy 1"}
-{"$type":"DummyImprovedEvent","id":"275c4942-85b2-40f0-a699-a6dc007b1afa",tags:["tag1key:tag1value", "tag2key:tag2value"], "title":"Dummy One"}
-{"$type":"DummyDeletedEvent","id":"275c4942-85b2-40f0-a699-a6dc007b1afa",tags:["tag1key:tag1value", "tag2key:tag2value"]}
+{"$type":"DummyCreatedEvent","id":"275c4942-85b2-40f0-a699-a6dc007b1afa","tags":["tag1key:tag1value", "tag2key:tag2value"], "title":"Dummy 1"}
+{"$type":"DummyImprovedEvent","id":"275c4942-85b2-40f0-a699-a6dc007b1afa","tags":["tag1key:tag1value", "tag2key:tag2value"], "title":"Dummy One"}
+{"$type":"DummyDeletedEvent","id":"275c4942-85b2-40f0-a699-a6dc007b1afa","tags":["tag1key:tag1value", "tag2key:tag2value"]}
 ```
 
 ---
@@ -94,27 +94,33 @@ Dieser Service unterstützt Dynamic Consistency Boundary. Siehe auch: https://dc
 Zur Filterung steht bspw. `query` bei `Read` zur Verfügung und `failIf` bei `Append` und `Overwrite`.
 
 ### Beispiel
-Filterung nach
+Filterung nach Typ, Tags und Datum:
 ```http
-GET /Read/Dummy/0815?query=types=DummyCreatedEvent|DummyDeletedEvent,tags=a1|a2:b1
+GET /Read/Dummy/0815?query=types=DummyCreatedEvent|DummyDeletedEvent,tags=a1|a2:b1,date=2023-05-06
 ```
-liefert nur Events zurück die entweder vom $type DummyCreatedEvent oder DummyDeletedEvent sind und gleichzeitig einen Tag a1 mit beliebigen oder keinen Value hat und einem Tag a2 mit einem Value b1.
-Es werden mehrere Gruppen unterstüzt. Diese sind durch ein Semikolon getrennt. Dadurch wird die Ergebnismenge unter Umständen vergrößert.
-Beispiel:
+Liefert alle Events vom Typ DummyCreatedEvent oder DummyDeletedEvent, mit Tag a1 oder a2:b1, die am 06.05.2023 erstellt wurden.
+
+ODER-Suche für mehrere Tage:
 ```http
-GET /Read/Dummy/0815?query=types=DummyCreatedEvent|DummyDeletedEvent,tags=a1|a2:b1;types=DummyImprovedEvent
+GET /Read/Dummy/0815?query=date=2023-05-06|2023-05-07
 ```
-Dadurch werden zusätzlich zu der vorherigen Filterung auch alle Events vom Typ `DummyImprovedEvent` mit aufgenommen.
+Liefert alle Events die am 06.05.2023 oder 07.05.2023 erstellt wurden.
 
-Falls nur Events gelesen werden sollen die nach der Zeile 33 dazugekommen sind mit allen Filterungen muss diese nur nach dem Pfad mit angegeben werden.
+Zeitraum-Suche:
 ```http
-GET /Read/Dummy/0815/33?query=types=DummyCreatedEvent|DummyDeletedEvent,tags=a1|a2:b1;types=DummyImprovedEvent
+GET /Read/Dummy/0815?query=date=2023-05-06~2023-05-16
 ```
-Bei `/Append` und `/Overwrite` kann eine Condition hinzugefügt werden die verhindert, dass Daten geschrieben werden wenn sich diese während der Übertragung geändert haben.
+Liefert alle Events, die zwischen dem 06.05.2023 und 16.05.2023 (inklusive) erstellt wurden.
 
-Falls das DCB-Feature nicht genutzt wird fungiert die `version` als harte Angabe wie viele Zeilen das Aggregate vor Abänderung haben soll. Jede Zeile ist dabei eine Version beginnend bei Zeile 1.
+Kombinierte Suche:
+```http
+GET /Read/Dummy/0815?query=types=DummyCreatedEvent,date=2023-05-06|2023-05-07~2023-05-16
+```
+Liefert alle Events vom Typ DummyCreatedEvent, die entweder am 06.05.2023 oder im Zeitraum 07.05.2023 bis 16.05.2023 erstellt wurden.
 
-Anstatt von **|** was einem **Oder** entspricht ist es auch möglich ein **+** zu verwenden was einem **Und** entspricht.
+Die bisherigen Filtermöglichkeiten (Semikolon für Gruppen, | für ODER) funktionieren auch mit dem neuen Feld `date`.
+Aus logischen Gründen funktioniert aber nicht + für und.
+Es ist auch möglich die Zeit und Zeitzone mit anzugeben. Dabei wird aber immer nur der jeweilige tag berücksichtigt.
 
 ## k6
 Um Performance-Tests / Last-Tests auszuführen wird [k6](https://grafana.com/docs/k6/latest/set-up/install-k6/#linux) benötigt.

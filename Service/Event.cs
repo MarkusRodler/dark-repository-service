@@ -1,6 +1,6 @@
 namespace Dark;
 
-public record Event([property: JsonPropertyName("$type")] string Type, IEnumerable<string>? Tags)
+public record Event([property: JsonPropertyName("$type")] string Type, IEnumerable<string>? Tags, DateTime? CreationTime)
 {
     public IEnumerable<(string Key, string? Value)> ParsedTags =>
         Tags?.Select(t =>
@@ -34,6 +34,24 @@ public record Event([property: JsonPropertyName("$type")] string Type, IEnumerab
             ev.ParsedTags.Any(t =>
                 t.Key.Equals(tag.Key, StringComparison.OrdinalIgnoreCase)
                 && (tag.Value is null || string.Equals(t.Value, tag.Value, StringComparison.OrdinalIgnoreCase))))),
+        "date" => MatchDate(ev, field.AndGroups),
         _ => false
     };
+
+    static bool MatchDate(Event ev, IEnumerable<IEnumerable<(string Key, string? Value)>> andGroups)
+    {
+        if (ev.CreationTime is null) return false;
+        var eventDate = ev.CreationTime.Value.Date;
+
+        return andGroups.All(andGroup => andGroup.Any(range =>
+        {
+            if (!DateTime.TryParse(range.Key, out var startDate)) return false;
+
+            return range.Value is null
+                ? eventDate >= startDate.Date
+                : DateTime.TryParse(range.Value, out var endDate)
+                    && eventDate >= startDate.Date
+                    && eventDate <= endDate.Date;
+        }));
+    }
 }
