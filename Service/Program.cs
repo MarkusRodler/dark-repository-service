@@ -41,13 +41,18 @@ app.MapHealthChecks("/heartbeat").DisableHttpMetrics();
 app.MapShortCircuit(404, "favicon.ico");
 
 app.MapGet("GetIdsFor/{aggregate}", async (string aggregate, FileSystemRepository repo)
-    => Results.Json(await repo.GetIdsForAggregate(aggregate), JsonContext.Default));
+    => Results.Ok(await repo.GetIdsForAggregate(aggregate)));
 
 app.MapGet("Has/{aggregate}/{id}", async ([AsParameters] Data data, FileSystemRepository repo)
     => (await repo.Has(data)) ? Results.Ok() : Results.NotFound());
 
 app.MapGet("Read/{aggregate}/{id}/{afterLine:int?}", async ([AsParameters] Read x) =>
 {
+    if (!await x.Repo.Has(new(x.Aggregate, x.Id)))
+    {
+        x.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
     x.Response.ContentType = "application/jsonl; charset=utf-8";
     await foreach (var @event in x.Repo.Read(new(x.Aggregate, x.Id), new(x.Query, x.AfterLine), x.Ct))
     {
