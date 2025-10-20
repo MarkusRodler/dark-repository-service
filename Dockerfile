@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/nightly/sdk:9.0.201-noble-aot AS publish
+FROM mcr.microsoft.com/dotnet/nightly/sdk:10.0.100-noble-aot AS publish
 ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
 WORKDIR /app
 COPY . .
