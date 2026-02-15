@@ -59,4 +59,28 @@ public static class QueryParser
         }
         return groups;
     }
+
+    public static List<string> AllHaveSingleDateFilter(List<QueryGroup> groups)
+    {
+        List<string> dateStrings = [];
+        if (groups.Count == 0) return dateStrings;
+
+        var allHaveDate = true;
+        foreach (var group in groups)
+        {
+            var dateField = group.Fields.FirstOrDefault(f => f.Name.Equals("date", StringComparison.OrdinalIgnoreCase));
+            if (dateField == null) { allHaveDate = false; break; }
+
+            foreach (var orGroup in dateField.AndGroups)
+            {
+                foreach (var (key, value) in orGroup)
+                {
+                    if (value is not null) { allHaveDate = false; break; }
+
+                    dateStrings.Add(DateTime.Parse(key).Date.ToString("yyyy-MM-dd"));
+                }
+            }
+        }
+        return allHaveDate && dateStrings.Count > 0 ? dateStrings : [];
+    }
 }

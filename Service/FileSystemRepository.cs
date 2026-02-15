@@ -19,10 +19,13 @@ public sealed class FileSystemRepository(string dataFolder, string lockFolder)
 
         var groups = QueryParser.Parse(cond.Query ?? "");
         var version = 0;
+        List<string> dateStrings = QueryParser.AllHaveSingleDateFilter(groups);
         await foreach (var line in File.ReadLinesAsync(DataFilePath(data), ct))
         {
             version++;
             if (version <= cond.Version) continue;
+
+            if (dateStrings.Count > 0 && !dateStrings.Any(x => line.Contains($"\"CreationTime\":\"{x}T"))) continue;
 
             if (cond.Query.IsNotFilled()
                 || JsonSerializer.Deserialize(line, JsonContext.Default.Event) is { } e && e.Matches(groups))
