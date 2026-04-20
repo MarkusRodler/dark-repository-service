@@ -76,14 +76,6 @@ jobs:
             --build-arg VERSION=$TAG \
             --cache-from $IMAGE_ID:latest
 
-      - name: Enable Automerge
-        if: github.event_name == 'pull_request'
-        run: gh pr merge --auto --rebase "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-        working-directory: main
-
       - name: Approve
         if: github.event_name == 'pull_request'
         run: gh pr review --approve "${{ github.event.pull_request.number }}"
